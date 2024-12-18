@@ -285,7 +285,8 @@ renderCUDA(
 	const float* __restrict__ bg_color,
 	float* __restrict__ out_color,
 	const float* __restrict__ depths,
-	float* __restrict__ invdepth)
+	float* __restrict__ invdepth,
+	float* __restrict__ pixels)
 {
 	// Identify current tile and associated min/max pixel range.
 	auto block = cg::this_thread_block();
@@ -376,9 +377,16 @@ renderCUDA(
 
 			T = test_T;
 
-			// Keep track of last range entry to update this
-			// pixel.
+			// Keep track of last range entry to update this pixel.
 			last_contributor = contributor;
+            //counting: how many times attends pixel shading for each GS.
+			atomicAdd(&(pixels[collected_id[j]]), 1.0f);
+
+			// comment out the above loop part, replaced by:
+			// xy.x xy.y with mask? --> pixels[xy]++
+
+			// alternative
+			// if tile_id==in_mask, pixels activated
 		}
 	}
 
@@ -409,7 +417,8 @@ void FORWARD::render(
 	const float* bg_color,
 	float* out_color,
 	float* depths,
-	float* depth)
+	float* depth,
+	float* pixels)
 {
 	renderCUDA<NUM_CHANNELS> << <grid, block >> > (
 		ranges,
@@ -423,7 +432,8 @@ void FORWARD::render(
 		bg_color,
 		out_color,
 		depths, 
-		depth);
+		depth,
+		pixels);
 }
 
 void FORWARD::preprocess(int P, int D, int M,
