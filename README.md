@@ -4,7 +4,7 @@ Bernhard Kerbl*, Georgios Kopanas*, Thomas Leimkühler, George Drettakis (* indi
 ## Installation
 ```shell
 git clone https://github.com/renaissanceee/basic_gs.git
-cd 3DGS_base
+cd basic_gs
 
 conda create -y -n basic_gs python=3.8
 conda activate basic_gs
