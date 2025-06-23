@@ -21,36 +21,36 @@ from argparse import ArgumentParser
 from arguments import ModelParams, PipelineParams, get_combined_args
 from gaussian_renderer import GaussianModel
 
-def render_set(model_path, name, iteration, views, gaussians, pipeline, background, scale_factor):
-    render_path = os.path.join(model_path, name, "ours_{}".format(iteration), f"renders_x{scale_factor}")
-    gts_path = os.path.join(model_path, name, "ours_{}".format(iteration), f"gt_x{scale_factor}")
+def render_set(model_path, name, iteration, views, gaussians, pipeline, background, kernel_size, scale_factor):
+    if kernel_size!=0.3:
+        render_path = os.path.join(model_path, name, "ours_{}".format(iteration), f"renders_kernel_x{scale_factor}")
+        gts_path = os.path.join(model_path, name, "ours_{}".format(iteration), f"gt_kernel_x{scale_factor}")
+    else:
+        render_path = os.path.join(model_path, name, "ours_{}".format(iteration), f"renders_x{scale_factor}")
+        gts_path = os.path.join(model_path, name, "ours_{}".format(iteration), f"gt_x{scale_factor}")
 
     makedirs(render_path, exist_ok=True)
     makedirs(gts_path, exist_ok=True)
 
     for idx, view in enumerate(tqdm(views, desc="Rendering progress")):
-        rendering = render(view, gaussians, pipeline, background)["render"]
+        rendering = render(view, gaussians, pipeline, background, kernel_size=kernel_size)["render"]
         gt = view.original_image[0:3, :, :]
         torchvision.utils.save_image(rendering, os.path.join(render_path, view.image_name + ".png"))
         torchvision.utils.save_image(gt, os.path.join(gts_path, view.image_name + ".png"))
 
-def render_sets(dataset : ModelParams, iteration : int, pipeline : PipelineParams, skip_train : bool, skip_test : bool, suffix: str):
+def render_sets(dataset : ModelParams, iteration : int, pipeline : PipelineParams, skip_train : bool, skip_test : bool):
     with torch.no_grad():
         gaussians = GaussianModel(dataset.sh_degree)
         scene = Scene(dataset, gaussians, load_iteration=iteration, shuffle=False)
         scale_factor = dataset.resolution
         bg_color = [1,1,1] if dataset.white_background else [0, 0, 0]
         background = torch.tensor(bg_color, dtype=torch.float32, device="cuda")
-
+        kernel_size = dataset.kernel_size
         if not skip_train:
-             render_set(dataset.model_path, "train", scene.loaded_iter, scene.getTrainCameras(), gaussians, pipeline, background, scale_factor)
+             render_set(dataset.model_path, "train", scene.loaded_iter, scene.getTrainCameras(), gaussians, pipeline, background, kernel_size, scale_factor)
 
         if not skip_test:
-            if suffix is not None:
-                render_set(dataset.model_path, f"test_{suffix}", scene.loaded_iter, scene.getTestCameras(), gaussians, pipeline, background, scale_factor)
-            else:
-                render_set(dataset.model_path, "test", scene.loaded_iter, scene.getTestCameras(), gaussians,
-                           pipeline, background, scale_factor)
+             render_set(dataset.model_path, "test", scene.loaded_iter, scene.getTestCameras(), gaussians, pipeline, background, kernel_size, scale_factor)
 
 if __name__ == "__main__":
     # Set up command line argument parser
@@ -61,11 +61,11 @@ if __name__ == "__main__":
     parser.add_argument("--skip_train", action="store_true")
     parser.add_argument("--skip_test", action="store_true")
     parser.add_argument("--quiet", action="store_true")
-    parser.add_argument('--suffix', type=str, default=None)
+    # parser.add_argument('--suffix', type=str, default=None)
     args = get_combined_args(parser)
     print("Rendering " + args.model_path)
 
     # Initialize system state (RNG)
     safe_state(args.quiet)
 
-    render_sets(model.extract(args), args.iteration, pipeline.extract(args), args.skip_train, args.skip_test, args.suffix)
+    render_sets(model.extract(args), args.iteration, pipeline.extract(args), args.skip_train, args.skip_test)

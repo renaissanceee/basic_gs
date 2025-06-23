@@ -19,8 +19,14 @@ pip install submodules/simple-knn
 ```
 ## Run
 ```shell
-python train.py -s {dataset_dir}/{scene} -m {output_dir}/{scene} --eval --white_background
+python train.py -s {dataset_dir}/{scene} -m {output_dir}/{scene} -r 1 --kernel_size 0.3 --eval --white_background
+# zoom-out
+python render.py -m benchmark_ficus_x1 --skip_train -r 8 --kernel_size 0.1/64
+# zoom-in
+python render.py -m benchmark_ficus_x8 --skip_train -r 1 --kernel_size 0.1*64
 
-python render.py -m benchmark_ficus_x8 --skip_train -r 1 --suffix {}
-python metrics.py -m benchmark_ficus_x8 -r 1 --suffix {}
+# baseline
+python metrics.py -m benchmark_ficus_x8 -r 1
+# new
+python metrics.py -m benchmark_ficus_x8 -r 1 --suffix kernel
 ```

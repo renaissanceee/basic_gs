@@ -48,10 +48,7 @@ def evaluate(model_paths, scale, suffix):
             per_view_dict[scene_dir] = {}
             full_dict_polytopeonly[scene_dir] = {}
             per_view_dict_polytopeonly[scene_dir] = {}
-            if suffix is not None:
-                test_dir = Path(scene_dir) / f"test_{suffix}"
-            else:
-                test_dir = Path(scene_dir) / "test"
+            test_dir = Path(scene_dir) / "test"
 
             for method in os.listdir(test_dir):
                 print("Method:", method)
@@ -62,8 +59,12 @@ def evaluate(model_paths, scale, suffix):
                 per_view_dict_polytopeonly[scene_dir][method] = {}
 
                 method_dir = test_dir / method
-                gt_dir = method_dir/ f"gt_x{scale}"
-                renders_dir = method_dir / f"renders_x{scale}"
+                if suffix is not None:
+                    gt_dir = method_dir/ f"gt_{suffix}_x{scale}"
+                    renders_dir = method_dir / f"renders_{suffix}_x{scale}"
+                else:
+                    gt_dir = method_dir/ f"gt_x{scale}"
+                    renders_dir = method_dir / f"renders_x{scale}"
                 renders, gts, image_names = readImages(renders_dir, gt_dir)
 
                 ssims = []

@@ -147,6 +147,7 @@ __global__ void computeCov2DCUDA(int P,
 	const float* cov3Ds,
 	const float h_x, float h_y,
 	const float tan_fovx, float tan_fovy,
+	const float kernel_size,
 	const float* view_matrix,
 	const float* dL_dconics,
 	float3* dL_dmeans,
@@ -194,9 +195,11 @@ __global__ void computeCov2DCUDA(int P,
 	glm::mat3 cov2D = glm::transpose(T) * glm::transpose(Vrk) * T;
 
 	// Use helper variables for 2D covariance entries. More compact.
-	float a = cov2D[0][0] += 0.3f;
+// 	float a = cov2D[0][0] += 0.3f;
+    float a = cov2D[0][0] += kernel_size;
 	float b = cov2D[0][1];
-	float c = cov2D[1][1] += 0.3f;
+// 	float c = cov2D[1][1] += 0.3f;
+	float c = cov2D[1][1] += kernel_size;
 
 	float denom = a * c - b * b;
 	float dL_da = 0, dL_db = 0, dL_dc = 0;
@@ -573,6 +576,7 @@ void BACKWARD::preprocess(
 	const float* projmatrix,
 	const float focal_x, float focal_y,
 	const float tan_fovx, float tan_fovy,
+	const float kernel_size,
 	const glm::vec3* campos,
 	const float3* dL_dmean2D,
 	const float* dL_dconic,
@@ -596,6 +600,7 @@ void BACKWARD::preprocess(
 		focal_y,
 		tan_fovx,
 		tan_fovy,
+		kernel_size,
 		viewmatrix,
 		dL_dconic,
 		(float3*)dL_dmean3D,

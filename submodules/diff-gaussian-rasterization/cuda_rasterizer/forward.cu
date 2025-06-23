@@ -71,7 +71,7 @@ __device__ glm::vec3 computeColorFromSH(int idx, int deg, int max_coeffs, const 
 }
 
 // Forward version of 2D covariance matrix computation
-__device__ float3 computeCov2D(const float3& mean, float focal_x, float focal_y, float tan_fovx, float tan_fovy, const float* cov3D, const float* viewmatrix)
+__device__ float3 computeCov2D(const float3& mean, float focal_x, float focal_y, float tan_fovx, float tan_fovy, float kernel_size, const float* cov3D, const float* viewmatrix)
 {
 	// The following models the steps outlined by equations 29
 	// and 31 in "EWA Splatting" (Zwicker et al., 2002). 
@@ -107,10 +107,10 @@ __device__ float3 computeCov2D(const float3& mean, float focal_x, float focal_y,
 
 	// Apply low-pass filter: every Gaussian should be at least
 	// one pixel wide/high. Discard 3rd row and column.
-	cov[0][0] += 0.3f;
-	cov[1][1] += 0.3f;
-// 	cov[0][0] += 0.3f*64;
-// 	cov[1][1] += 0.3f*64;
+// 	cov[0][0] += 0.3f;
+// 	cov[1][1] += 0.3f;
+	cov[0][0] += kernel_size;
+	cov[1][1] += kernel_size;
 	return { float(cov[0][0]), float(cov[0][1]), float(cov[1][1]) };
 }
 
@@ -171,6 +171,7 @@ __global__ void preprocessCUDA(int P, int D, int M,
 	const int W, int H,
 	const float tan_fovx, float tan_fovy,
 	const float focal_x, float focal_y,
+	const float kernel_size,
 	int* radii,
 	float2* points_xy_image,
 	float* depths,
@@ -215,7 +216,8 @@ __global__ void preprocessCUDA(int P, int D, int M,
 	}
 
 	// Compute 2D screen-space covariance matrix
-	float3 cov = computeCov2D(p_orig, focal_x, focal_y, tan_fovx, tan_fovy, cov3D, viewmatrix);
+// 	float3 cov = computeCov2D(p_orig, focal_x, focal_y, tan_fovx, tan_fovy, cov3D, viewmatrix);
+    float3 cov = computeCov2D(p_orig, focal_x, focal_y, tan_fovx, tan_fovy, kernel_size, cov3D, viewmatrix);
 
 	// Invert covariance (EWA algorithm)
 	float det = (cov.x * cov.z - cov.y * cov.y);
@@ -417,6 +419,7 @@ void FORWARD::preprocess(int P, int D, int M,
 	const int W, int H,
 	const float focal_x, float focal_y,
 	const float tan_fovx, float tan_fovy,
+	const float kernel_size,
 	int* radii,
 	float2* means2D,
 	float* depths,
@@ -444,6 +447,7 @@ void FORWARD::preprocess(int P, int D, int M,
 		W, H,
 		tan_fovx, tan_fovy,
 		focal_x, focal_y,
+		kernel_size,
 		radii,
 		means2D,
 		depths,
