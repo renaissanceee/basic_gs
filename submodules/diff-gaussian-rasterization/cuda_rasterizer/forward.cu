@@ -109,6 +109,8 @@ __device__ float3 computeCov2D(const float3& mean, float focal_x, float focal_y,
 	// one pixel wide/high. Discard 3rd row and column.
 	cov[0][0] += 0.3f;
 	cov[1][1] += 0.3f;
+// 	cov[0][0] += 0.3f*64;
+// 	cov[1][1] += 0.3f*64;
 	return { float(cov[0][0]), float(cov[0][1]), float(cov[1][1]) };
 }
 

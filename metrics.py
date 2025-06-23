@@ -33,7 +33,7 @@ def readImages(renders_dir, gt_dir):
         image_names.append(fname)
     return renders, gts, image_names
 
-def evaluate(model_paths):
+def evaluate(model_paths, scale, suffix):
 
     full_dict = {}
     per_view_dict = {}
@@ -48,8 +48,10 @@ def evaluate(model_paths):
             per_view_dict[scene_dir] = {}
             full_dict_polytopeonly[scene_dir] = {}
             per_view_dict_polytopeonly[scene_dir] = {}
-
-            test_dir = Path(scene_dir) / "test"
+            if suffix is not None:
+                test_dir = Path(scene_dir) / f"test_{suffix}"
+            else:
+                test_dir = Path(scene_dir) / "test"
 
             for method in os.listdir(test_dir):
                 print("Method:", method)
@@ -60,8 +62,8 @@ def evaluate(model_paths):
                 per_view_dict_polytopeonly[scene_dir][method] = {}
 
                 method_dir = test_dir / method
-                gt_dir = method_dir/ "gt"
-                renders_dir = method_dir / "renders"
+                gt_dir = method_dir/ f"gt_x{scale}"
+                renders_dir = method_dir / f"renders_x{scale}"
                 renders, gts, image_names = readImages(renders_dir, gt_dir)
 
                 ssims = []
@@ -99,5 +101,7 @@ if __name__ == "__main__":
     # Set up command line argument parser
     parser = ArgumentParser(description="Training script parameters")
     parser.add_argument('--model_paths', '-m', required=True, nargs="+", type=str, default=[])
+    parser.add_argument('--resolution', '-r', type=int, default=-1)
+    parser.add_argument('--suffix', type=str, default=None) 
     args = parser.parse_args()
-    evaluate(args.model_paths)
+    evaluate(args.model_paths, args.resolution, args.suffix)
