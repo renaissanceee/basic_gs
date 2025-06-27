@@ -55,6 +55,7 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
     means2D = screenspace_points
     opacity = pc.get_opacity
 
+
     # If precomputed 3d covariance is provided, use it. If not, then it will be computed from
     # scaling / rotation by the rasterizer.
     scales = None
@@ -81,8 +82,21 @@ def render(viewpoint_camera, pc : GaussianModel, pipe, bg_color : torch.Tensor, 
             shs = pc.get_features
     else:
         colors_precomp = override_color
+        
+    ## ---- for zoom-out views ---- ##
+    # n_start = opacity.shape[0]
+    # print("start prune:", opacity.shape[0])
+    # mask = (opacity > 0.05).squeeze(1)
+    # opacity = opacity[mask]
+    # scales = scales[mask]
+    # rotations = rotations[mask]
+    # shs = shs[mask]
+    # means3D, means2D = means3D[mask], means2D[mask]
+    # n_end = opacity.shape[0]
+    # print("end prune:", n_end, f"--> {n_end/n_start*100}%")
+    ###################################
 
-    # Rasterize visible Gaussians to image, obtain their radii (on screen). 
+    # Rasterize visible Gaussians to image, obtain their radii (on screen).
     rendered_image, radii = rasterizer(
         means3D = means3D,
         means2D = means2D,

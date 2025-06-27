@@ -18,7 +18,7 @@ from utils.loss_utils import ssim
 from lpipsPyTorch import lpips
 import json
 from tqdm import tqdm
-from utils.image_utils import psnr
+from utils.image_utils import psnr  
 from argparse import ArgumentParser
 
 def readImages(renders_dir, gt_dir):
@@ -59,7 +59,7 @@ def evaluate(model_paths, scale, suffix):
                 per_view_dict_polytopeonly[scene_dir][method] = {}
 
                 method_dir = test_dir / method
-                if suffix is not None:
+                if suffix!='':
                     gt_dir = method_dir/ f"gt_{suffix}_x{scale}"
                     renders_dir = method_dir / f"renders_{suffix}_x{scale}"
                 else:
@@ -88,9 +88,9 @@ def evaluate(model_paths, scale, suffix):
                                                             "PSNR": {name: psnr for psnr, name in zip(torch.tensor(psnrs).tolist(), image_names)},
                                                             "LPIPS": {name: lp for lp, name in zip(torch.tensor(lpipss).tolist(), image_names)}})
 
-            with open(scene_dir + "/results.json", 'w') as fp:
+            with open(scene_dir + "/results.json", 'a') as fp:
                 json.dump(full_dict[scene_dir], fp, indent=True)
-            with open(scene_dir + "/per_view.json", 'w') as fp:
+            with open(scene_dir + "/per_view.json", 'a') as fp:
                 json.dump(per_view_dict[scene_dir], fp, indent=True)
         except:
             print("Unable to compute metrics for model", scene_dir)
@@ -103,6 +103,6 @@ if __name__ == "__main__":
     parser = ArgumentParser(description="Training script parameters")
     parser.add_argument('--model_paths', '-m', required=True, nargs="+", type=str, default=[])
     parser.add_argument('--resolution', '-r', type=int, default=-1)
-    parser.add_argument('--suffix', type=str, default=None) 
+    parser.add_argument('--suffix', type=str, default='')
     args = parser.parse_args()
     evaluate(args.model_paths, args.resolution, args.suffix)
